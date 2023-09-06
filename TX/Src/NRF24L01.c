@@ -8,34 +8,27 @@ uint8_t NRF24_SPIWrite(uint8_t Buff)
 	uint8_t index = 0;
 	for(index = 0; index < 8; index++)
 	{
-		if( (Buff & 0x80) == 0x80)
-			HAL_GPIO_WritePin(NRF_MOSI_GPIO_Port, NRF_MOSI_Pin, GPIO_PIN_SET);
+		if( (Buff&0x80) == 0x80)
+			HAL_GPIO_WritePin(NRF_MOSI_GPIO_Port,NRF_MOSI_Pin,GPIO_PIN_SET);
 		else
-			HAL_GPIO_WritePin(NRF_MOSI_GPIO_Port, NRF_MOSI_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(NRF_MOSI_GPIO_Port,NRF_MOSI_Pin,GPIO_PIN_RESET);
 		
-		Buff =  Buff << 1;
-		
-		HAL_GPIO_WritePin(NRF_SCK_GPIO_Port, NRF_SCK_Pin, GPIO_PIN_SET);
+		Buff =  Buff<<1;
+		HAL_GPIO_WritePin(NRF_SCK_GPIO_Port,NRF_SCK_Pin,GPIO_PIN_SET);
 
 		Buff |= HAL_GPIO_ReadPin(NRF_MISO_GPIO_Port,NRF_MISO_Pin);
-		
-		HAL_GPIO_WritePin(NRF_SCK_GPIO_Port, NRF_SCK_Pin, GPIO_PIN_RESET);		
+		HAL_GPIO_WritePin(NRF_SCK_GPIO_Port,NRF_SCK_Pin,GPIO_PIN_RESET);		
 	}
-	
 	return (Buff);
 }
 
-uint8_t NRF24_ReadReg(uint8_t reg)
+unsigned char CTR_spiRead(unsigned char reg)
 {
-	uint8_t reg_value = 0;
-	
-	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_RESET);	
-	
+	uint8_t reg_value=0;
+	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port,NRF_CSN_Pin,GPIO_PIN_RESET);	
 	NRF24_SPIWrite(reg);
 	reg_value = NRF24_SPIWrite(0x00);
-	
-	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_SET);	
-	
+	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port,NRF_CSN_Pin,GPIO_PIN_SET);	
 	return reg_value;
 }
 
@@ -43,31 +36,27 @@ uint8_t NRF24_WriteReg(uint8_t reg, uint8_t value)
 {
 	uint8_t status;
 	
-	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port,NRF_CSN_Pin,GPIO_PIN_RESET);
 	
 	status = NRF24_SPIWrite(reg);
 	NRF24_SPIWrite(value);
 	
-	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port,NRF_CSN_Pin,GPIO_PIN_SET);
 	
 	return status;
 }
 
-uint8_t NRF24_ReadBuff(uint8_t reg, uint8_t *buff, uint8_t length)
+unsigned char CTR_spiReadBuff(unsigned char reg, unsigned char *buff, unsigned char uchars)
 {
 	uint8_t status;
 	uint8_t index = 0;
-	
-	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_RESET);
-	
+	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port,NRF_CSN_Pin,GPIO_PIN_RESET);
 	status = NRF24_SPIWrite(reg);
-	for(index = 0; index < length; index++)
+	for(index = 0; index < uchars; index++)
 	{
 		buff[index] = NRF24_SPIWrite(0x00);
 	}
-	
-	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_SET);	
-	
+	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port,NRF_CSN_Pin,GPIO_PIN_SET);	
 	return status;
 }
 
@@ -76,7 +65,7 @@ uint8_t NRF24_WriteBuff(uint8_t reg, uint8_t *buff, uint8_t length)
 	uint8_t status;
 	uint8_t index = 0;
 	
-	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port,NRF_CSN_Pin,GPIO_PIN_RESET);
 	
 	status = NRF24_SPIWrite(reg);
 	for(index = 0; index < length; index++)
@@ -92,9 +81,9 @@ uint8_t NRF24_WriteBuff(uint8_t reg, uint8_t *buff, uint8_t length)
 void NRF24_Init(void)
 {
 	HAL_Delay(100);
-	HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port, NRF_CSN_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(NRF_SCK_GPIO_Port, NRF_SCK_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(NRF_CE_GPIO_Port,NRF_CE_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(NRF_CSN_GPIO_Port,NRF_CSN_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(NRF_SCK_GPIO_Port,NRF_SCK_Pin,GPIO_PIN_RESET);
 	
 	NRF24_WriteBuff( (W_REGISTER | TX_ADDR) , TX_ADDRESS, TX_ADDR_WIDTH); //Transmit address
   NRF24_WriteBuff( (W_REGISTER | RX_ADDR_P0) , RX_ADDRESS, RX_ADDR_WIDTH); //Receive 5 bytes address data
@@ -106,52 +95,47 @@ void NRF24_Init(void)
   NRF24_WriteReg(W_REGISTER + RF_SETUP, 0x07); //Power TX mode: 0dBm, Data rate: 1Mbps
 }
 
-void NRF24_SetRX(void)
+void CTR_nrfSetRX(void)
 {
-	HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin,GPIO_PIN_RESET);
-	
-	NRF24_WriteReg(W_REGISTER + CONFIG, 0x0F); //Enable CRC, Power up, RX
-	
-	HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(NRF_CE_GPIO_Port,NRF_CE_Pin,GPIO_PIN_RESET);
+	NRF24_WriteReg(W_REGISTER + CONFIG, 0x0f);
+	HAL_GPIO_WritePin(NRF_CE_GPIO_Port,NRF_CE_Pin,GPIO_PIN_SET);
 	HAL_Delay(130);
 }
 
 void NRF24_SetTX(void)
 {
-	HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(NRF_CE_GPIO_Port,NRF_CE_Pin,GPIO_PIN_RESET);
 	
-	NRF24_WriteReg(W_REGISTER + CONFIG, 0x0E); //Enable CRC, Power up, TX
+	NRF24_WriteReg(W_REGISTER + CONFIG, 0x0E); //Enable CRC, Power up
 	
-	HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(NRF_CE_GPIO_Port,NRF_CE_Pin,GPIO_PIN_SET);
 	HAL_Delay(130);
 }
 
-uint8_t NRF24_Receive(uint8_t *rx_buf)
+unsigned char CTR_nrfGetPacket(unsigned char* rx_buf)
 {
-	uint8_t value = 0;
-	uint8_t status = 0;
-	
-	status = NRF24_ReadReg(CTR_STATUS);
-	if( (status & 0x40) != 0)
+	uint8_t value=0,sta=0;
+	sta = CTR_spiRead(CTR_STATUS);
+	if((sta&0x40) != 0)
 	{
-		HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_RESET);
-		NRF24_ReadBuff(R_RX_PAYLOAD, rx_buf,W_TX_PAYLOAD_WIDTH);
+		HAL_GPIO_WritePin(NRF_CE_GPIO_Port,NRF_CE_Pin,GPIO_PIN_RESET);
+		CTR_spiReadBuff(R_RX_PAYLOAD, rx_buf,W_TX_PAYLOAD_WIDTH);
 		value = 1;
 	}
-	NRF24_WriteReg( (W_REGISTER | CTR_STATUS) , status);
-	
+	NRF24_WriteReg(W_REGISTER+CTR_STATUS,sta);
 	return value;
 }
 
 void NRF24_Transmit(uint8_t *data)
 {
-	HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_RESET); // CE select
+	HAL_GPIO_WritePin(NRF_CE_GPIO_Port,NRF_CE_Pin,GPIO_PIN_RESET); // CE select
 	
 	NRF24_WriteBuff( (W_REGISTER | RX_ADDR_P0) , TX_ADDRESS, RX_ADDR_WIDTH);
 	NRF24_WriteBuff(W_TX_PAYLOAD, data, W_TX_PAYLOAD_WIDTH); //send the payload
 	NRF24_WriteReg( (W_REGISTER | CONFIG) , 0x0E); //Enable CRC, Power up
 	
-	HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_SET); // CE unselect
+	HAL_GPIO_WritePin(NRF_CE_GPIO_Port,NRF_CE_Pin,GPIO_PIN_SET); // CE unselect
 }
 
 
