@@ -96,8 +96,8 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 	//NRF24L01
-	CTR_nrfInit(); //Khoi dong
-	CTR_nrfSetRX(); // set day la mach thu
+	NRF24_Init();
+	NRF24_SetRX();
 	
 	//L298
 	HAL_GPIO_WritePin(GPIOB, L298_IN1_Pin, GPIO_PIN_RESET); //IN1
@@ -106,6 +106,7 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOB, L298_IN4_Pin, GPIO_PIN_SET); //IN4
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); //EN1
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); //EN2
+	
 	__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1, 0);
 	__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2, 0);
   /* USER CODE END 2 */
@@ -115,66 +116,69 @@ int main(void)
   while (1)
   {
 		if(flag == 1){
-		if (CTR_nrfGetPacket(RXBUFF)==1)
-		{
-			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-			CTR_nrfSetRX();
-			readValue_X = ( (RXBUFF[0]-48)*1000 + (RXBUFF[1]-48)*100 + (RXBUFF[2]-48)*10 + (RXBUFF[3]-48) );
-			readValue_Y = ( (RXBUFF[4]-48)*1000 + (RXBUFF[5]-48)*100 + (RXBUFF[6]-48)*10 + (RXBUFF[7]-48) );
-			flag =2;
-		} 
-		else
-		{
-			readValue_X = 2000;
-			readValue_Y = 2000;
+			if (NRF24_Receive(RXBUFF) == 1)
+			{
+				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+				NRF24_SetRX();
+				
+				readValue_X = ( (RXBUFF[0]-48)*1000 + (RXBUFF[1]-48)*100 + (RXBUFF[2]-48)*10 + (RXBUFF[3]-48) );
+				readValue_Y = ( (RXBUFF[4]-48)*1000 + (RXBUFF[5]-48)*100 + (RXBUFF[6]-48)*10 + (RXBUFF[7]-48) );
+				
+				flag =2;
+			} 
+			else
+			{
+				readValue_X = 2000;
+				readValue_Y = 2000;
+			}
 		}
-	}
-		//HAL_Delay(10);
+		
 		if(flag == 2){
-		//forward
-		if(readValue_X < 1900)
-		{
-			HAL_GPIO_WritePin(GPIOB, L298_IN1_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(GPIOB, L298_IN2_Pin, GPIO_PIN_SET);
+			//forward
+			if(readValue_X < 1900)
+			{
+				HAL_GPIO_WritePin(GPIOB, L298_IN1_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(GPIOB, L298_IN2_Pin, GPIO_PIN_SET);
+				
+				HAL_GPIO_WritePin(GPIOB, L298_IN3_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(GPIOB, L298_IN4_Pin, GPIO_PIN_SET);
+				
+				EN1_Value = ((readValue_X - 1900) * 1000)/(0 - 1900);
+				EN2_Value = ((readValue_X - 1900) * 1000)/(0 - 1900);
+			}
 			
-			HAL_GPIO_WritePin(GPIOB, L298_IN3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(GPIOB, L298_IN4_Pin, GPIO_PIN_SET);
+			//backward
+			else if(readValue_X > 2100)
+			{
+				HAL_GPIO_WritePin(GPIOB, L298_IN1_Pin, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(GPIOB, L298_IN2_Pin, GPIO_PIN_RESET);
+				
+				HAL_GPIO_WritePin(GPIOB, L298_IN3_Pin, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(GPIOB, L298_IN4_Pin, GPIO_PIN_RESET);
+				
+				EN1_Value = ((readValue_X - 2100) * 1000)/(4095 - 2100);
+				EN2_Value = ((readValue_X - 2100) * 1000)/(4095 - 2100);
+			}
+			else
+			{
+				EN1_Value = 0;
+				EN2_Value = 0;
+			}
 			
-			EN1_Value = ((readValue_X - 1900) * 1000)/(0 - 1900);
-			EN2_Value = ((readValue_X - 1900) * 1000)/(0 - 1900);
-		}
-		
-		//backward
-		else if(readValue_X > 2100)
-		{
-			HAL_GPIO_WritePin(GPIOB, L298_IN1_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(GPIOB, L298_IN2_Pin, GPIO_PIN_RESET);
+			if(EN1_Value < 300)
+			{
+				EN1_Value = 0;
+			}
+			if(EN2_Value < 300)
+			{
+				EN2_Value = 0;
+			}
 			
-			HAL_GPIO_WritePin(GPIOB, L298_IN3_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(GPIOB, L298_IN4_Pin, GPIO_PIN_RESET);
+			__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1, EN1_Value);
+			__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2, EN2_Value);
 			
-			EN1_Value = ((readValue_X - 2100) * 1000)/(4095 - 2100);
-			EN2_Value = ((readValue_X - 2100) * 1000)/(4095 - 2100);
+			flag = 1;
 		}
-		else
-		{
-			EN1_Value = 0;
-			EN2_Value = 0;
-		}
-		
-		if(EN1_Value < 300)
-		{
-			EN1_Value = 0;
-		}
-		if(EN2_Value < 300)
-		{
-			EN2_Value = 0;
-		}
-		
-		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1, EN1_Value);
-		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2, EN2_Value);
-		flag =1;
-	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

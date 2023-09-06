@@ -2,7 +2,19 @@
 #define CTR_NRF 100
 
 #include "stm32f1xx_hal.h"
-#include "main.h"
+
+// added
+#define NRF_CE_Pin GPIO_PIN_6
+#define NRF_CE_GPIO_Port GPIOA
+#define NRF_CSN_Pin GPIO_PIN_7
+#define NRF_CSN_GPIO_Port GPIOA
+#define NRF_SCK_Pin GPIO_PIN_3
+#define NRF_SCK_GPIO_Port GPIOA
+#define NRF_MOSI_Pin GPIO_PIN_4
+#define NRF_MOSI_GPIO_Port GPIOA
+#define NRF_MISO_Pin GPIO_PIN_5
+#define NRF_MISO_GPIO_Port GPIOA
+//End added
 
 #define TX_ADDR_WIDTH    5
 #define RX_ADDR_WIDTH    5
@@ -45,16 +57,16 @@
 #define FIFO_STATUS     0x17  
 
 uint8_t NRF24_SPIWrite(uint8_t Buff);
-uint8_t NRF24_ReadReg(uint8_t reg);
+unsigned char CTR_spiRead(unsigned char reg);
 uint8_t NRF24_WriteReg(uint8_t reg, uint8_t value);
 
-uint8_t NRF24_ReadBuff(uint8_t reg, uint8_t *buff, uint8_t length);
+unsigned char CTR_spiReadBuff(unsigned char reg, unsigned char *buff, unsigned char uchars);
 uint8_t NRF24_WriteBuff(uint8_t reg, uint8_t *buff, uint8_t length);
 
 void NRF24_Init(void);
-void NRF24_SetRX(void);
+void CTR_nrfSetRX(void);
 void NRF24_SetTX(void);
-uint8_t NRF24_Receive(uint8_t *rx_buf);
+unsigned char CTR_nrfGetPacket(unsigned char* rx_buf);
 void NRF24_Transmit(uint8_t *data);
 
 #endif
