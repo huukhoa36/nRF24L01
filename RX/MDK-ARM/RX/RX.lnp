@@ -1,0 +1,24 @@
+--cpu Cortex-M3
+"rx\startup_stm32f103xb.o"
+"rx\nrf24l01.o"
+"rx\main.o"
+"rx\stm32f1xx_it.o"
+"rx\stm32f1xx_hal_msp.o"
+"rx\stm32f1xx_hal_gpio_ex.o"
+"rx\stm32f1xx_hal_tim.o"
+"rx\stm32f1xx_hal_tim_ex.o"
+"rx\stm32f1xx_hal.o"
+"rx\stm32f1xx_hal_rcc.o"
+"rx\stm32f1xx_hal_rcc_ex.o"
+"rx\stm32f1xx_hal_gpio.o"
+"rx\stm32f1xx_hal_dma.o"
+"rx\stm32f1xx_hal_cortex.o"
+"rx\stm32f1xx_hal_pwr.o"
+"rx\stm32f1xx_hal_flash.o"
+"rx\stm32f1xx_hal_flash_ex.o"
+"rx\stm32f1xx_hal_exti.o"
+"rx\system_stm32f1xx.o"
+--strict --scatter "RX\RX.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "RX.map" -o RX\RX.axf
